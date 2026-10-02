@@ -1,0 +1,30 @@
+BasedOnStyle: LLVM
+
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+
+ColumnLimit: 100
+
+BreakBeforeBraces: Attach
+
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+
+PointerAlignment: Left
+ReferenceAlignment: Left
+
+SpaceBeforeParens: ControlStatements
+
+NamespaceIndentation: None
+
+AccessModifierOffset: -4
+
+IndentCaseLabels: true
+
+AlignAfterOpenBracket: Align
+AlignOperands: Align
+
+SortIncludes: CaseSensitive
+
+IncludeBlocks: Regroup
