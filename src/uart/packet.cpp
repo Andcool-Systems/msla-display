@@ -124,3 +124,13 @@ bool PacketReader::readUInt32(uint32_t& value) {
 
     return true;
 }
+
+bool PacketReader::readExact(void* buffer, uint16_t size) {
+    if (!canRead(size))
+        return false;
+
+    memcpy(buffer, data.data() + pos, size);
+    pos += size;
+
+    return true;
+}

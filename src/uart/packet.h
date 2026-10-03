@@ -5,12 +5,6 @@
 #include <Arduino.h>
 #include <vector>
 
-class TransmitPacket {
-public:
-    uint8_t data[MTU];
-    size_t size;
-};
-
 /// @brief Check if uart buffer is starts with sync bytes
 /// @return bool
 bool startsWithSync();
@@ -50,6 +44,8 @@ public:
     bool readUInt16(uint16_t& v);
 
     bool readUInt32(uint32_t& v);
+
+    bool readExact(void* buffer, uint16_t size);
 };
 
 extern const uint8_t SYNC_BYTES[];

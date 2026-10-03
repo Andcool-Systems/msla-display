@@ -7,9 +7,6 @@
 
 class Container : public Widget {
 private:
-    int w;
-    int h;
-
     uint32_t bg_color;
     uint32_t bgbg_color;
 
@@ -20,6 +17,9 @@ private:
     std::vector<Widget*> children;
 
 public:
+    int w;
+    int h;
+
     Container(TFT_eSPI& tft, int x, int y, int w, int h, int32_t r, uint32_t bg_color,
               uint32_t bggb_color)
         : w(w), h(h), bg_color(bg_color), bgbg_color(bgbg_color), r(r), Widget(tft, x, y) {}

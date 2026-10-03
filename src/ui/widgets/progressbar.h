@@ -57,9 +57,14 @@ public:
     };
 
     void update(TouchPointType& touch) override {
+        uint8_t s = tft.textsize;
+        tft.setTextSize(this->font_size);
+
         text = String(progress, 1) + "%";
         int text_w = tft.textWidth(text);
         new_w = w - (text_w + 10);
+
+        tft.setTextSize(s);
 
         last_progress_width = progress_width;
         progress_width = new_w * (progress / 100.0);
