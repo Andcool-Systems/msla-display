@@ -8,9 +8,12 @@
 
 class Screen {
 public:
-    Screen(TFT_eSPI& tft) : tft(tft) {}
+    using SetScreenCallback = std::function<void(String)>;
 
-    virtual void update(FT6336U& touch) = 0;
+    String screen_name;
+    Screen(TFT_eSPI& tft, String screen_name) : tft(tft), screen_name(screen_name) {}
+
+    virtual void update(FT6336U& touch, SetScreenCallback setScreen) = 0;
 
 protected:
     TFT_eSPI& tft;

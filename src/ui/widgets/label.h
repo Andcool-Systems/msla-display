@@ -5,16 +5,15 @@
 
 class Label : public Widget {
 private:
-    uint8_t font_size = 1;
-
-    String text;
-
     uint32_t bg_color;
     uint32_t text_color;
 
     DirtyArea dirty_area;
 
 public:
+    String text;
+    uint8_t font_size = 1;
+
     Label(TFT_eSPI& tft, String text, int x, int y, uint32_t text_color, uint32_t bg_color,
           uint8_t font_size)
         : text(text), bg_color(bg_color), text_color(text_color), font_size(font_size),

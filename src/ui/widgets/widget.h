@@ -5,6 +5,9 @@
 
 class Widget {
 public:
+    int x = 0;
+    int y = 0;
+
     Widget(TFT_eSPI& tft, int x, int y) : tft(tft), x(x), y(y) {}
     virtual void draw() = 0;
     virtual void update(TouchPointType& touch) = 0;
@@ -52,10 +55,6 @@ protected:
 
     int rel_x = 0;
     int rel_y = 0;
-
-private:
-    int x = 0;
-    int y = 0;
 };
 
 class DirtyArea {

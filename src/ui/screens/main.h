@@ -15,6 +15,10 @@
 
 #define ETA_UPDATE_SECONDS 3
 
+bool isPrintState(uint8_t s) {
+    return s == 1 || s == 2;
+}
+
 class Main : public Screen {
 private:
     unsigned long status_request_last_time = 0;
@@ -41,6 +45,8 @@ private:
 
     Container image_cont = Container(tft, CARD_MARGIN, CARD_MARGIN, TFT_WIDTH / 2, TFT_WIDTH / 2, 5,
                                      TFT_CARD_COLOR, TFT_BG_COLOR);
+
+    Image logo = Image(tft, ((TFT_WIDTH / 2) - 120) / 2, ((TFT_WIDTH / 2) - 120) / 2, 120, 120);
 
     Container top_right_cont = Container(tft, TFT_WIDTH / 2 + CARD_GAP, CARD_MARGIN,
                                          TFT_HEIGHT - (TFT_WIDTH / 2 + (CARD_GAP + CARD_MARGIN)),
@@ -74,13 +80,14 @@ private:
         Label(tft, "0:0:0", CARD_PADDING + 26, CARD_GAP + 80, TFT_WHITE, TFT_CARD_COLOR, 2);
 
 public:
-    Main(TFT_eSPI& tft) : Screen(tft) {
-        LittleFS.begin();
-
+    Main(TFT_eSPI& tft) : Screen(tft, "main") {
         stack_image.loadImage("/stack.rgb565");
         remaining_image.loadImage("/clock.rgb565");
+        logo.loadImage("/logo.rgb565");
 
         btn.setPressedCallback([this]() { UARTSend(40); });
+
+        image_cont.add_children(&logo);
 
         // iamge_cont.add_children(&btn);
         bottom_card.add_children(&lbl);
@@ -95,7 +102,7 @@ public:
         top_right_cont.add_children(&remaining);
     }
 
-    void update(FT6336U& touch) override {
+    void update(FT6336U& touch, SetScreenCallback setScreen) override {
         TouchPointType t = getTouch(touch);
         unsigned long mill = millis();
 
@@ -169,17 +176,11 @@ public:
 
                 global_progress.setProgress((current_ir / (float)total_ir) * 100.f);
 
-                if (last_state_t != 1 && last_state_t != 2) {
-                    startRequestingImage();
-                }
                 break;
 
             case 2:
                 printer_status.setText("Print paused");
 
-                if (last_state_t != 1 && last_state_t != 2) {
-                    startRequestingImage();
-                }
                 break;
 
             case 3:
@@ -196,10 +197,19 @@ public:
 
             case 6:
                 printer_status.setText("Print finished <3");
+                global_progress.setProgress(100);
                 break;
 
             default:
                 break;
+        }
+
+        if (isPrintState(last_state_t) && !isPrintState(state_t)) {
+            image_cont.invalidate();
+        }
+
+        if (!isPrintState(last_state_t) && isPrintState(state_t)) {
+            startRequestingImage();
         }
 
         last_state_t = state_t;
@@ -208,6 +218,7 @@ public:
     void startRequestingImage() {
         preview_loaded = false;
         preview_loading_offset = 0;
+        image_cont.invalidate();
         requestPreview();
     }
 

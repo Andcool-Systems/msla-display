@@ -34,6 +34,8 @@ public:
           font_size(font_size), parent_color(parent_color), Widget(tft, x, y) {}
 
     void draw() override {
+        tft.fillRect(dirty_area.x, dirty_area.y, dirty_area.w, dirty_area.h, this->bg_color);
+
         tft.setTextColor(this->text_color, this->parent_color);
         tft.setTextSize(this->font_size);
 
@@ -70,6 +72,7 @@ public:
         progress_width = new_w * (progress / 100.0);
         if (last_progress_width != progress_width || last_text != text) {
             invalidate();
+            dirty_area = DirtyArea{getX(), getY(), last_progress_width, h};
         }
 
         last_text = text;

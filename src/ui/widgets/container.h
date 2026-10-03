@@ -27,29 +27,25 @@ public:
     void draw() override {
         tft.fillSmoothRoundRect(getX(), getY(), w, h, r, bg_color, bgbg_color);
 
-        for (auto ch : children) {
-            ch->draw();
-        }
-
         this->dirty = false;
     };
 
     void update(TouchPointType& touch) override {
-        bool dirty_children = isDirty();
-
-        for (auto ch : children) {
-            ch->update(touch);
-            dirty_children = dirty_children || ch->isDirty();
+        bool self_dirty = isDirty();
+        if (self_dirty) {
+            draw();
         }
 
-        if (dirty_children) {
-            draw();
+        for (auto ch : children) {
+            if (self_dirty)
+                ch->invalidate();
+            ch->update(touch);
         }
     };
 
     /// Adds a new child
     void add_children(Widget* child) {
-        child->disableSelfRedraw();
+        // child->disableSelfRedraw();
         child->setRelativeCords(getX(), getY());
         children.push_back(child);
     }
