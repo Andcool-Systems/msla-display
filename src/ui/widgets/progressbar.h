@@ -5,8 +5,8 @@
 
 class ProgressBar : public Widget {
 private:
-    int w;
-    int h;
+    uint16_t w;
+    uint16_t h;
 
     int new_w;
     String text;
@@ -27,7 +27,7 @@ private:
     DirtyArea dirty_area;
 
 public:
-    ProgressBar(TFT_eSPI& tft, int x, int y, int w, int h, uint32_t text_color,
+    ProgressBar(TFT_eSPI& tft, uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32_t text_color,
                 uint32_t active_color, uint32_t bg_color, uint32_t parent_color, uint8_t font_size)
 
         : w(w), h(h), bg_color(bg_color), text_color(text_color), active_color(active_color),
@@ -54,8 +54,6 @@ public:
         }
 
         tft.drawString(this->text, x + new_w + 10, y + ((h / 2) - (text_h / 2)));
-
-        this->dirty = false;
     };
 
     void update(TouchPointType& touch) override {
@@ -77,6 +75,8 @@ public:
 
         last_text = text;
         redraw();
+
+        this->dirty = false;
     };
 
     // Set progress bar progress

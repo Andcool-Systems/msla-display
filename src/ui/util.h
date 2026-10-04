@@ -2,7 +2,7 @@
 #include <Arduino.h>
 
 /// @brief Darken TFT color
-uint16_t darken(uint16_t color, uint8_t amount) {
+inline uint16_t darken(uint16_t color, uint8_t amount) {
     uint8_t r = (color >> 11) & 0x1F;
     uint8_t g = (color >> 5) & 0x3F;
     uint8_t b = color & 0x1F;
@@ -15,7 +15,7 @@ uint16_t darken(uint16_t color, uint8_t amount) {
 }
 
 /// @brief Formats duration
-std::string format_duration(uint32_t total_seconds) {
+inline std::string format_duration(uint32_t total_seconds) {
     uint32_t days = total_seconds / (3600 * 24);
     uint32_t hours = (total_seconds % (3600 * 24)) / 3600;
     uint32_t minutes = (total_seconds % 3600) / 60;

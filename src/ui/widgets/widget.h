@@ -5,10 +5,10 @@
 
 class Widget {
 public:
-    int x = 0;
-    int y = 0;
+    uint16_t x = 0;
+    uint16_t y = 0;
 
-    Widget(TFT_eSPI& tft, int x, int y) : tft(tft), x(x), y(y) {}
+    Widget(TFT_eSPI& tft, uint16_t x, uint16_t y) : tft(tft), x(x), y(y) {}
     virtual void draw() = 0;
     virtual void update(TouchPointType& touch) = 0;
 
@@ -35,15 +35,15 @@ public:
         draw();
     }
 
-    int getX() {
+    uint16_t getX() {
         return rel_x + x;
     }
 
-    int getY() {
+    uint16_t getY() {
         return rel_y + y;
     }
 
-    void setRelativeCords(int x, int y) {
+    void setRelativeCords(uint16_t x, uint16_t y) {
         rel_x = x;
         rel_y = y;
     }
@@ -53,8 +53,8 @@ protected:
     bool dirty = true;
     TFT_eSPI& tft;
 
-    int rel_x = 0;
-    int rel_y = 0;
+    uint16_t rel_x = 0;
+    uint16_t rel_y = 0;
 };
 
 class DirtyArea {
@@ -67,4 +67,28 @@ public:
 
     DirtyArea() {}
     DirtyArea(uint16_t x, uint16_t y, uint16_t w, uint16_t h) : x(x), y{y}, w(w), h(h) {}
+};
+
+class ContainerAbstract : public Widget {
+protected:
+    std::vector<Widget*> children;
+
+    /// @brief Updates a children of container
+    void updateChildren(TouchPointType& touch) {
+        for (auto ch : children) {
+            if (isDirty())
+                ch->invalidate();
+            ch->update(touch);
+        }
+    }
+
+public:
+    ContainerAbstract(TFT_eSPI& tft, uint16_t x, uint16_t y) : Widget(tft, x, y) {};
+
+    /// Adds a new child
+    void add_children(Widget* child) {
+        // child->disableSelfRedraw();
+        child->setRelativeCords(getX(), getY());
+        children.push_back(child);
+    }
 };

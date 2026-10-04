@@ -9,7 +9,7 @@
 
 class Application {
 public:
-    Application(TFT_eSPI& tft) : tft(tft), main_screen(tft), initial_screen(tft) {
+    Application(TFT_eSPI& tft) : tft(tft), main_screen(tft, *this), initial_screen(tft, *this) {
         tft.setRotation(1);
         tft.fillScreen(TFT_BLACK);
 
@@ -20,11 +20,14 @@ public:
         screens.push_back(&initial_screen);
 
         setScreen("initial");
-        setBacklight(255);
     }
 
     void update(FT6336U& touch) {
-        screens[current_screen]->update(touch, [this](String name) { setScreen(name); });
+        screens[current_screen]->update(touch);
+    }
+
+    void onUART(PacketReader pr) {
+        screens[current_screen]->onUART(pr);
     }
 
     void setScreen(String name) {

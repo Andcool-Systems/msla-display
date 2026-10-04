@@ -58,10 +58,10 @@ public:
 
         tft.endWrite();
         tft.setSwapBytes(false);
-        this->dirty = false;
     };
 
     void update(TouchPointType& touch) override {
         redraw();
+        this->dirty = false;
     };
 };

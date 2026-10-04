@@ -3,7 +3,7 @@
 #include "ui/util.h"
 #include "widget.h"
 
-class Button : public Widget {
+class Button : public ContainerAbstract {
 private:
     int width;
     int height;
@@ -26,7 +26,7 @@ public:
     Button(TFT_eSPI& tft, String text, int x, int y, int w, int h, int r, uint32_t fg_color,
            uint32_t text_color, uint32_t parent_color, uint8_t font_size)
         : text(text), width(w), height(h), fg_color(fg_color), text_color(text_color),
-          font_size(font_size), parent_color(parent_color), r(r), Widget(tft, x, y) {}
+          font_size(font_size), parent_color(parent_color), r(r), ContainerAbstract(tft, x, y) {}
 
     void draw() override {
         tft.setTextColor(this->text_color);
@@ -38,13 +38,10 @@ public:
         int x = getX();
         int y = getY();
 
-        // tft.fillRect(x, y, _real_width, _real_height, TFT_BLACK);
         tft.fillSmoothRoundRect(x, y, width, height, r, pressed ? darken(fg_color, 30) : fg_color,
                                 parent_color);
 
         tft.drawString(this->text, x + (width / 2 - w / 2), y + (height / 2 - h / 2));
-
-        this->dirty = false;
     };
 
     void update(TouchPointType& touch) override {
@@ -72,6 +69,9 @@ public:
         }
 
         redraw();
+
+        updateChildren(touch);
+        this->dirty = false;
     };
 
     /// @brief Set button pressed callback

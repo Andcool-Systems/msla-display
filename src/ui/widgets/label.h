@@ -25,12 +25,11 @@ public:
 
         tft.fillRect(dirty_area.x, dirty_area.y, dirty_area.w, dirty_area.h, this->bg_color);
         tft.drawString(this->text, getX(), getY());
-
-        this->dirty = false;
     };
 
     void update(TouchPointType& touch) override {
         redraw();
+        this->dirty = false;
     };
 
     /// @brief Set label text

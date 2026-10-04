@@ -20,9 +20,24 @@ void setup() {
 
     static Application application(tft);
     app = &application;
+
+    app->update(ft6336u);
+    app->setBacklight(255);
 }
 
+unsigned long last_time = 0;
+
 void loop() {
-    app->update(ft6336u);
-    delay(25);
+    unsigned long now = millis();
+    if (now - last_time > 25) {
+        last_time = now;
+        app->update(ft6336u);
+    }
+
+    while (true) {
+        PacketReader pr;
+        if (!readPacket(pr))
+            break;
+        app->onUART(pr);
+    }
 }

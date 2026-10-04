@@ -5,16 +5,12 @@
 
 #include <vector>
 
-class Container : public Widget {
+class Container : public ContainerAbstract {
 private:
     uint32_t bg_color;
     uint32_t bgbg_color;
 
     int32_t r;
-
-    // DirtyArea dirty_area;
-
-    std::vector<Widget*> children;
 
 public:
     int w;
@@ -22,31 +18,19 @@ public:
 
     Container(TFT_eSPI& tft, int x, int y, int w, int h, int32_t r, uint32_t bg_color,
               uint32_t bggb_color)
-        : w(w), h(h), bg_color(bg_color), bgbg_color(bgbg_color), r(r), Widget(tft, x, y) {}
+        : w(w), h(h), bg_color(bg_color), bgbg_color(bgbg_color), r(r),
+          ContainerAbstract(tft, x, y) {}
 
     void draw() override {
         tft.fillSmoothRoundRect(getX(), getY(), w, h, r, bg_color, bgbg_color);
-
-        this->dirty = false;
     };
 
     void update(TouchPointType& touch) override {
-        bool self_dirty = isDirty();
-        if (self_dirty) {
+        if (isDirty()) {
             draw();
         }
 
-        for (auto ch : children) {
-            if (self_dirty)
-                ch->invalidate();
-            ch->update(touch);
-        }
+        updateChildren(touch);
+        this->dirty = false;
     };
-
-    /// Adds a new child
-    void add_children(Widget* child) {
-        // child->disableSelfRedraw();
-        child->setRelativeCords(getX(), getY());
-        children.push_back(child);
-    }
 };
