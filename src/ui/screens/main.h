@@ -52,12 +52,28 @@ private:
                                          TFT_HEIGHT - (TFT_WIDTH / 2 + (CARD_GAP + CARD_MARGIN)),
                                          TFT_WIDTH / 2, 5, TFT_CARD_COLOR, TFT_BG_COLOR);
 
+    int buttons_size = (TFT_WIDTH / 2 - (CARD_GAP + CARD_MARGIN) - (CARD_MARGIN * 2)) / 3;
+
     Container bottom_card =
-        Container(tft, 5, TFT_WIDTH / 2 + CARD_GAP, TFT_HEIGHT - (CARD_MARGIN * 2),
+        Container(tft, 5, TFT_WIDTH / 2 + CARD_GAP,
+                  TFT_HEIGHT - (CARD_MARGIN * 2) - buttons_size - CARD_MARGIN,
                   TFT_WIDTH / 2 - (CARD_GAP + CARD_MARGIN), 5, TFT_CARD_COLOR, TFT_BG_COLOR);
 
+    Container buttons_cont = Container(
+        tft, TFT_HEIGHT - (CARD_MARGIN + buttons_size), TFT_WIDTH / 2 + CARD_GAP, buttons_size,
+        TFT_WIDTH / 2 - (CARD_GAP + CARD_MARGIN), 5, TFT_BG_COLOR, TFT_BG_COLOR);
+
+    Button btn1 = Button(tft, "1", 0, 0, buttons_size, buttons_size, 5, TFT_GREEN, TFT_WHITE,
+                         TFT_BG_COLOR, 2);
+
+    Button btn2 = Button(tft, "2", 0, buttons_size + CARD_MARGIN, buttons_size, buttons_size, 5,
+                         TFT_GREEN, TFT_WHITE, TFT_BG_COLOR, 2);
+
+    Button home = Button(tft, "H", 0, buttons_size * 2 + CARD_MARGIN * 2, buttons_size,
+                         buttons_size, 5, TFT_GREEN, TFT_WHITE, TFT_BG_COLOR, 2);
+
     Label lbl = Label(tft, "Label", 5, 5, TFT_WHITE, TFT_CARD_COLOR, 2);
-    Button btn = Button(tft, "Btn", 10, 10, 50, 50, TFT_RED, TFT_WHITE, 2);
+    // Button btn = Button(tft, "Btn", 10, 10, 50, 50, TFT_RED, TFT_WHITE, 2);
 
     Label printer_status =
         Label(tft, "Loading...", CARD_PADDING, CARD_PADDING, TFT_WHITE, TFT_CARD_COLOR, 2);
@@ -85,7 +101,7 @@ public:
         remaining_image.loadImage("/clock.rgb565");
         logo.loadImage("/logo.rgb565");
 
-        btn.setPressedCallback([this]() { UARTSend(40); });
+        // btn.setPressedCallback([this]() { UARTSend(40); });
 
         image_cont.add_children(&logo);
 
@@ -100,6 +116,12 @@ public:
 
         top_right_cont.add_children(&remaining_image);
         top_right_cont.add_children(&remaining);
+
+        home.setPressedCallback([this]() { UARTSend(56); });
+
+        buttons_cont.add_children(&btn1);
+        buttons_cont.add_children(&btn2);
+        buttons_cont.add_children(&home);
     }
 
     void update(FT6336U& touch, SetScreenCallback setScreen) override {
@@ -132,6 +154,7 @@ public:
         image_cont.update(t);
         top_right_cont.update(t);
         bottom_card.update(t);
+        buttons_cont.update(t);
     }
 
     void handlePacket(PacketReader* pr) {
@@ -172,7 +195,7 @@ public:
                 pr->readUInt32(total_elapsed);
 
                 printer_status.setText("Printing...");
-                layers.setText("Layer " + String(current_layer) + "/" + String(total_ir));
+                layers.setText("Layer " + String(current_layer) + "/" + String(total_layers));
 
                 global_progress.setProgress((current_ir / (float)total_ir) * 100.f);
 

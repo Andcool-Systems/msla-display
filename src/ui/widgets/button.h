@@ -14,16 +14,19 @@ private:
     uint32_t text_color;
     uint8_t font_size;
 
+    uint32_t parent_color;
+    int r;
+
     bool pressed = false;
 
     std::function<void()> fn_pressed = nullptr;
     std::function<void()> fn_released = nullptr;
 
 public:
-    Button(TFT_eSPI& tft, String text, int x, int y, int w, int h, uint32_t fg_color,
-           uint32_t text_color, uint8_t font_size)
+    Button(TFT_eSPI& tft, String text, int x, int y, int w, int h, int r, uint32_t fg_color,
+           uint32_t text_color, uint32_t parent_color, uint8_t font_size)
         : text(text), width(w), height(h), fg_color(fg_color), text_color(text_color),
-          font_size(font_size), Widget(tft, x, y) {}
+          font_size(font_size), parent_color(parent_color), r(r), Widget(tft, x, y) {}
 
     void draw() override {
         tft.setTextColor(this->text_color);
@@ -36,7 +39,8 @@ public:
         int y = getY();
 
         // tft.fillRect(x, y, _real_width, _real_height, TFT_BLACK);
-        tft.fillRect(x, y, width, height, pressed ? darken(fg_color, 30) : fg_color);
+        tft.fillSmoothRoundRect(x, y, width, height, r, pressed ? darken(fg_color, 30) : fg_color,
+                                parent_color);
 
         tft.drawString(this->text, x + (width / 2 - w / 2), y + (height / 2 - h / 2));
 
