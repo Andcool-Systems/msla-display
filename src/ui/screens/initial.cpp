@@ -14,9 +14,7 @@ Initial::Initial(TFT_eSPI& tft, Application& app) : Screen(tft, app, "initial") 
     cont.add_children(&loading);
 }
 
-void Initial::update(FT6336U& touch) {
-    TouchPointType t = getTouch(touch);
-
+void Initial::update(TouchPointType& t) {
     unsigned long mill = millis();
     if (mill - status_request_last_time > 5000 || status_request_last_time == 0) {
         status_request_last_time = mill;
@@ -33,4 +31,10 @@ void Initial::onUART(PacketReader& pr) {
         app.setScreen("main");
         return;
     }
+}
+
+void Initial::invalidate() {
+    tft.fillScreen(TFT_BG_COLOR);
+
+    cont.invalidate();
 }

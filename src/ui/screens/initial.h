@@ -20,6 +20,7 @@ private:
 public:
     Initial(TFT_eSPI& tft, Application& app);
 
-    void update(FT6336U& touch) override;
+    void update(TouchPointType& t) override;
     void onUART(PacketReader& pr) override;
+    void invalidate() override;
 };

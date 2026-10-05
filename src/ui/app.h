@@ -9,7 +9,9 @@
 
 class Application {
 public:
-    Application(TFT_eSPI& tft) : tft(tft), main_screen(tft, *this), initial_screen(tft, *this) {
+    Application(TFT_eSPI& tft)
+        : tft(tft), main_screen(tft, *this), initial_screen(tft, *this),
+          standby_timer(3 * 60 * 1000) {
         tft.setRotation(1);
         tft.fillScreen(TFT_BLACK);
 
@@ -23,7 +25,28 @@ public:
     }
 
     void update(FT6336U& touch) {
-        screens[current_screen]->update(touch);
+        TouchPointType t = getTouch(touch);
+
+        if (t.status != TouchStatusEnum::release) {
+            standby_timer.reset();
+            if (standby) {
+                restoreStandbyScreen();
+                post_standby_touch_supress = true;
+            }
+        }
+
+        if (post_standby_touch_supress && t.status == TouchStatusEnum::release)
+            post_standby_touch_supress = false;
+
+        if (post_standby_touch_supress)
+            t.status = TouchStatusEnum::release;
+
+        if (standby_timer.timeout() && !standby) {
+            setBacklight(0);
+            standby = true;
+        }
+
+        screens[current_screen]->update(t);
     }
 
     void onUART(PacketReader pr) {
@@ -35,12 +58,19 @@ public:
         for (auto sc : screens) {
             if (sc->screen_name == name) {
                 current_screen = i;
+                screens[current_screen]->invalidate();
+                standby = false;
 
-                tft.fillScreen(TFT_BG_COLOR);
                 break;
             }
             i++;
         }
+    }
+
+    void restoreStandbyScreen() {
+        standby_timer.reset();
+        setBacklight(255);
+        standby = false;
     }
 
     /// @brief Set backlight power
@@ -56,4 +86,9 @@ private:
 
     std::vector<Screen*> screens;
     size_t current_screen = 0;
+
+    Timer standby_timer;
+    bool standby = false;
+
+    bool post_standby_touch_supress = false;
 };

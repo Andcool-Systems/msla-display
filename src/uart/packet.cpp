@@ -91,8 +91,18 @@ bool PacketReader::readDouble(double& value) {
     if (!canRead(sizeof(value)))
         return false;
 
-    memcpy(&value, &data[pos], 8);
-    pos += 8;
+    memcpy(&value, &data[pos], sizeof(value));
+    pos += sizeof(value);
+
+    return true;
+}
+
+bool PacketReader::readFloat(float& value) {
+    if (!canRead(sizeof(value)))
+        return false;
+
+    memcpy(&value, &data[pos], sizeof(value));
+    pos += sizeof(value);
 
     return true;
 }

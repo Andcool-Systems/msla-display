@@ -43,7 +43,11 @@ public:
     /// @brief read u16 from buf
     bool readUInt16(uint16_t& v);
 
+    /// @brief read u32 from buf
     bool readUInt32(uint32_t& v);
+
+    /// @brief read f32 from buf
+    bool readFloat(float& value);
 
     bool readExact(void* buffer, uint16_t size);
 };

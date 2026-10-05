@@ -3,12 +3,14 @@
 #include "screen.h"
 #include "uart/uart.h"
 
+#include <timer.h>
 #include <ui/widgets/button.h>
 #include <ui/widgets/container.h>
 #include <ui/widgets/hr.h>
 #include <ui/widgets/image.h>
 #include <ui/widgets/label.h>
 #include <ui/widgets/progressbar.h>
+#include <ui/widgets/remote_image.h>
 
 #define CARD_MARGIN 5
 #define CARD_GAP 10
@@ -22,8 +24,9 @@ inline bool isPrintState(uint8_t s) {
 
 class Main : public Screen {
 private:
-    unsigned long status_request_last_time = 0;
-    unsigned long remaining_time_last_time = 0;
+    Timer global_state_timer;
+    Timer physical_state_timer;
+    Timer remaining_update_timer;
 
     bool preview_loaded = false;
     uint8_t preview_loading_lines = 2;
@@ -44,8 +47,16 @@ private:
     uint32_t total_elapsed = 0;
     /// !STATE
 
+    /// MECHANICAL STATE
+    uint8_t uv_state_data;
+    float stepper_pos;
+
+    /// !MECHANICAL STATE
+
     Container image_cont = Container(tft, CARD_MARGIN, CARD_MARGIN, TFT_WIDTH / 2, TFT_WIDTH / 2, 5,
                                      TFT_CARD_COLOR, TFT_BG_COLOR);
+
+    RemoteImage preview = RemoteImage(tft, 0, 0, TFT_WIDTH / 2, TFT_WIDTH / 2, 2);
 
     Image logo = Image(tft, ((TFT_WIDTH / 2) - 120) / 2, ((TFT_WIDTH / 2) - 120) / 2, 120, 120);
 
@@ -53,11 +64,29 @@ private:
                                          TFT_HEIGHT - (TFT_WIDTH / 2 + (CARD_GAP + CARD_MARGIN)),
                                          TFT_WIDTH / 2, 5, TFT_CARD_COLOR, TFT_BG_COLOR);
 
+    Container left_bottom_card =
+        Container(tft, CARD_MARGIN, TFT_WIDTH / 2 + CARD_GAP, TFT_WIDTH / 2 + CARD_PADDING + 5,
+                  TFT_WIDTH / 2 - (CARD_GAP + CARD_MARGIN), 5, TFT_CARD_COLOR, TFT_BG_COLOR);
+
+    /// layers
+    Image z_pos_image = Image(tft, CARD_PADDING, CARD_PADDING, 24, 24);
+
+    Label z_pos =
+        Label(tft, "Z:170.00mm", CARD_PADDING + 30, CARD_PADDING + 5, TFT_WHITE, TFT_CARD_COLOR, 2);
+
+    Image uv_image = Image(tft, CARD_PADDING, CARD_PADDING + 30, 24, 24);
+
+    Label uv_state =
+        Label(tft, "OFF", CARD_PADDING + 30, CARD_PADDING + 35, TFT_WHITE, TFT_CARD_COLOR, 2);
+
+    // ------------------------------------------------------------------
+
     int buttons_size = (TFT_WIDTH / 2 - (CARD_GAP + CARD_MARGIN) - (CARD_MARGIN * 2)) / 3;
 
     Container bottom_card =
-        Container(tft, CARD_MARGIN, TFT_WIDTH / 2 + CARD_GAP,
-                  TFT_HEIGHT - (CARD_MARGIN * 2) - buttons_size - CARD_MARGIN,
+        Container(tft, TFT_WIDTH / 2 + CARD_PADDING + 5 + CARD_GAP, TFT_WIDTH / 2 + CARD_GAP,
+                  TFT_HEIGHT - (CARD_MARGIN * 2) - buttons_size -
+                      (TFT_WIDTH / 2 + CARD_PADDING + 5 + CARD_GAP),
                   TFT_WIDTH / 2 - (CARD_GAP + CARD_MARGIN), 5, TFT_CARD_COLOR, TFT_BG_COLOR);
 
     Container buttons_cont = Container(
@@ -86,7 +115,7 @@ private:
                 TFT_CARD_COLOR);
 
     ProgressBar global_progress =
-        ProgressBar(tft, CARD_GAP, CARD_GAP + 30,
+        ProgressBar(tft, CARD_PADDING + 1, CARD_PADDING + 30,
                     TFT_HEIGHT - (TFT_WIDTH / 2 + (CARD_GAP + CARD_MARGIN) + CARD_GAP * 2), 15,
                     TFT_WHITE, TFT_ACT_COLOR, TFT_EL_COLOR, TFT_CARD_COLOR, 2);
 
@@ -111,17 +140,13 @@ private:
 public:
     Main(TFT_eSPI& tft, Application& app);
 
-    void update(FT6336U& touch) override;
+    void update(TouchPointType& t) override;
 
     void onUART(PacketReader& pr) override;
 
+    void invalidate() override;
+
     void updateState(PacketReader& pr);
 
-    void startRequestingImage();
-
-    /// @brief Create preview loading request
-    void requestPreview();
-
-    /// @brief  Handle and display preview response
-    void handlePreviewResponse(PacketReader& pr);
+    void updateMechanicalState(PacketReader& pr);
 };

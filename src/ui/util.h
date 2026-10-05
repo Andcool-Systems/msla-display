@@ -34,3 +34,12 @@ inline std::string format_duration(uint32_t total_seconds) {
 
     return std::to_string(seconds) + "s";
 }
+
+inline TouchPointType getTouch(FT6336U& touch) {
+    FT6336U_TouchPointType tp = touch.scan();
+    TouchPointType t = tp.tp[0];
+    t.x = tp.tp[0].y;
+    t.y = TFT_WIDTH - tp.tp[0].x;
+
+    return t;
+}

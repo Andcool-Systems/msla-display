@@ -1,13 +1,29 @@
 #include "main.h"
 
-Main::Main(TFT_eSPI& tft, Application& app) : Screen(tft, app, "main") {
+Main::Main(TFT_eSPI& tft, Application& app)
+    : Screen(tft, app, "main"), global_state_timer(5000), physical_state_timer(1500),
+      remaining_update_timer(ETA_UPDATE_SECONDS * 1000) {
     stack_image.loadImage("/stack.rgb565");
     remaining_image.loadImage("/clock.rgb565");
     logo.loadImage("/logo.rgb565");
     home_image.loadImage("/home.rgb565");
     elapsed_image.loadImage("/hourglass.rgb565");
 
+    z_pos_image.loadImage("/bp.rgb565");
+    uv_image.loadImage("/uv.rgb565");
+
+    preview.setRequestCallback([](uint16_t h, uint16_t request_bytes, uint16_t offset_bytes) {
+        PacketWriter pw;
+        pw.write((uint8_t)20);
+        pw.write(h);
+        pw.write(request_bytes);
+        pw.write(offset_bytes);
+
+        UARTSend(pw);
+    });
+
     image_cont.add_children(&logo);
+    image_cont.add_children(&preview);
 
     bottom_card.add_children(&lbl);
 
@@ -30,19 +46,36 @@ Main::Main(TFT_eSPI& tft, Application& app) : Screen(tft, app, "main") {
     buttons_cont.add_children(&btn2);
     buttons_cont.add_children(&home);
     home.add_children(&home_image);
+
+    left_bottom_card.add_children(&z_pos_image);
+    left_bottom_card.add_children(&z_pos);
+    left_bottom_card.add_children(&uv_image);
+    left_bottom_card.add_children(&uv_state);
 }
 
-void Main::update(FT6336U& touch) {
-    TouchPointType t = getTouch(touch);
-    unsigned long mill = millis();
-
-    if (mill - status_request_last_time > 5000 || status_request_last_time == 0) {
-        status_request_last_time = mill;
+void Main::update(TouchPointType& t) {
+    if (global_state_timer.timeout())
         UARTSend(10); // STATUS REQUEST
+
+    if (physical_state_timer.timeout()) {
+        UARTSend(12); // MECHANICAL STATUS REQUEST
     }
 
-    if (mill - remaining_time_last_time > ETA_UPDATE_SECONDS * 1000) {
-        remaining_time_last_time = mill;
+    switch (t.status) {
+        case TouchStatusEnum::release:
+            lbl.setText("release");
+            break;
+
+        case TouchStatusEnum::stream:
+            lbl.setText("stream");
+            break;
+
+        case TouchStatusEnum::touch:
+            lbl.setText("touch");
+            break;
+    }
+
+    if (remaining_update_timer.timeout()) {
         if (estimated_finish_time >= ETA_UPDATE_SECONDS)
             estimated_finish_time -= ETA_UPDATE_SECONDS;
         else
@@ -59,6 +92,7 @@ void Main::update(FT6336U& touch) {
     top_right_cont.update(t);
     bottom_card.update(t);
     buttons_cont.update(t);
+    left_bottom_card.update(t);
 }
 
 void Main::onUART(PacketReader& pr) {
@@ -73,11 +107,24 @@ void Main::onUART(PacketReader& pr) {
                 updateState(pr);
             break;
 
+        /// MECHANICAL STATUS RESPONSE
+        case 13:
+            updateMechanicalState(pr);
+            break;
+
         /// PRINTING PREVIEW
         case 21:
-            handlePreviewResponse(pr);
+            preview.onUART(pr);
             break;
     }
+}
+
+void Main::updateMechanicalState(PacketReader& pr) {
+    if (pr.readUInt8(uv_state_data))
+        uv_state.setText(uv_state_data ? "ON" : "OFF");
+
+    if (pr.readFloat(stepper_pos))
+        z_pos.setText("Z:" + String(stepper_pos, 2) + "mm");
 }
 
 void Main::updateState(PacketReader& pr) {
@@ -132,59 +179,23 @@ void Main::updateState(PacketReader& pr) {
     }
 
     if (isPrintState(last_state_t) && !isPrintState(state_t)) {
+        preview.reset();
         image_cont.invalidate();
     }
 
     if (!isPrintState(last_state_t) && isPrintState(state_t)) {
-        startRequestingImage();
+        preview.startLoading();
     }
 
     last_state_t = state_t;
 }
 
-void Main::startRequestingImage() {
-    preview_loaded = false;
-    preview_loading_offset = 0;
+void Main::invalidate() {
+    tft.fillScreen(TFT_BG_COLOR);
+
     image_cont.invalidate();
-    requestPreview();
-}
-
-/// @brief Create preview loading request
-void Main::requestPreview() {
-    if (preview_loaded)
-        return;
-
-    PacketWriter pw;
-    pw.write((uint8_t)20);
-    pw.write((uint16_t)(image_cont.h));
-    pw.write((uint16_t)((image_cont.h * preview_loading_lines) * 2));
-    pw.write((uint16_t)(preview_loading_offset * 2));
-    UARTSend(pw);
-}
-
-/// @brief  Handle and display preview response
-void Main::handlePreviewResponse(PacketReader& pr) {
-    uint8_t status = 0;
-    if (pr.readUInt8(status) && status != 0) {
-        return;
-    }
-
-    uint16_t len = 0;
-    uint16_t pixels[image_cont.h * preview_loading_lines];
-
-    if (pr.readUInt16(len) && pr.readExact(pixels, len)) {
-        lbl.setText(String(pixels[0]));
-        uint16_t y = preview_loading_offset / image_cont.h;
-
-        tft.pushImage(image_cont.getX(), image_cont.getY() + y, image_cont.h, preview_loading_lines,
-                      reinterpret_cast<uint16_t*>(pixels));
-
-        if (y >= image_cont.h) {
-            preview_loaded = true;
-            return;
-        }
-
-        preview_loading_offset += image_cont.h * preview_loading_lines;
-        requestPreview();
-    }
+    top_right_cont.invalidate();
+    bottom_card.invalidate();
+    buttons_cont.invalidate();
+    left_bottom_card.invalidate();
 }

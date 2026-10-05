@@ -1,4 +1,5 @@
 #include "config.h"
+#include "timer.h"
 #include "uart/communication.h"
 #include "ui/app.h"
 
@@ -10,6 +11,7 @@ TFT_eSPI tft;
 FT6336U ft6336u(CTP_SDA_PIN, CTP_SCL_PIN, CTP_RST_PIN, CTP_INT_PIN);
 
 Application* app;
+Timer fps_timer(25);
 
 void setup() {
     LittleFS.begin();
@@ -25,12 +27,8 @@ void setup() {
     app->setBacklight(255);
 }
 
-unsigned long last_time = 0;
-
 void loop() {
-    unsigned long now = millis();
-    if (now - last_time > 25) {
-        last_time = now;
+    if (fps_timer.timeout()) {
         app->update(ft6336u);
     }
 
