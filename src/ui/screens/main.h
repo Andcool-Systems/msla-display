@@ -5,6 +5,7 @@
 
 #include <ui/widgets/button.h>
 #include <ui/widgets/container.h>
+#include <ui/widgets/hr.h>
 #include <ui/widgets/image.h>
 #include <ui/widgets/label.h>
 #include <ui/widgets/progressbar.h>
@@ -55,7 +56,7 @@ private:
     int buttons_size = (TFT_WIDTH / 2 - (CARD_GAP + CARD_MARGIN) - (CARD_MARGIN * 2)) / 3;
 
     Container bottom_card =
-        Container(tft, 5, TFT_WIDTH / 2 + CARD_GAP,
+        Container(tft, CARD_MARGIN, TFT_WIDTH / 2 + CARD_GAP,
                   TFT_HEIGHT - (CARD_MARGIN * 2) - buttons_size - CARD_MARGIN,
                   TFT_WIDTH / 2 - (CARD_GAP + CARD_MARGIN), 5, TFT_CARD_COLOR, TFT_BG_COLOR);
 
@@ -80,22 +81,32 @@ private:
     Label printer_status =
         Label(tft, "Loading...", CARD_PADDING, CARD_PADDING, TFT_WHITE, TFT_CARD_COLOR, 2);
 
+    Hr hr1 = Hr(tft, CARD_MARGIN, CARD_GAP + 20,
+                TFT_HEIGHT - (TFT_WIDTH / 2 + (CARD_GAP + CARD_MARGIN * 3)), 2, TFT_EL_COLOR,
+                TFT_CARD_COLOR);
+
     ProgressBar global_progress =
-        ProgressBar(tft, CARD_GAP, CARD_GAP + 25,
+        ProgressBar(tft, CARD_GAP, CARD_GAP + 30,
                     TFT_HEIGHT - (TFT_WIDTH / 2 + (CARD_GAP + CARD_MARGIN) + CARD_GAP * 2), 15,
                     TFT_WHITE, TFT_ACT_COLOR, TFT_EL_COLOR, TFT_CARD_COLOR, 2);
 
     /// layers
-    Image stack_image = Image(tft, 5, CARD_GAP + 50, 24, 24);
+    Image stack_image = Image(tft, CARD_PADDING, CARD_GAP + 55, 24, 24);
 
     Label layers =
-        Label(tft, "Layer -/-", CARD_PADDING + 26, CARD_GAP + 55, TFT_WHITE, TFT_CARD_COLOR, 2);
+        Label(tft, "Layer -/-", CARD_PADDING + 30, CARD_GAP + 60, TFT_WHITE, TFT_CARD_COLOR, 2);
 
     /// remaining
-    Image remaining_image = Image(tft, 5, CARD_GAP + 75, 24, 24);
+    Image remaining_image = Image(tft, CARD_PADDING, CARD_GAP + 85, 24, 24);
 
     Label remaining =
-        Label(tft, "0:0:0", CARD_PADDING + 26, CARD_GAP + 80, TFT_WHITE, TFT_CARD_COLOR, 2);
+        Label(tft, "ETA: 0s", CARD_PADDING + 30, CARD_GAP + 90, TFT_WHITE, TFT_CARD_COLOR, 2);
+
+    /// elapsed
+    Image elapsed_image = Image(tft, CARD_PADDING, CARD_GAP + 115, 24, 24);
+
+    Label elapsed =
+        Label(tft, "Elapsed: 0s", CARD_PADDING + 30, CARD_GAP + 120, TFT_WHITE, TFT_CARD_COLOR, 2);
 
 public:
     Main(TFT_eSPI& tft, Application& app);

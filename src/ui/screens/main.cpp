@@ -5,12 +5,14 @@ Main::Main(TFT_eSPI& tft, Application& app) : Screen(tft, app, "main") {
     remaining_image.loadImage("/clock.rgb565");
     logo.loadImage("/logo.rgb565");
     home_image.loadImage("/home.rgb565");
+    elapsed_image.loadImage("/hourglass.rgb565");
 
     image_cont.add_children(&logo);
 
     bottom_card.add_children(&lbl);
 
     top_right_cont.add_children(&printer_status);
+    top_right_cont.add_children(&hr1);
     top_right_cont.add_children(&global_progress);
 
     top_right_cont.add_children(&stack_image);
@@ -18,6 +20,9 @@ Main::Main(TFT_eSPI& tft, Application& app) : Screen(tft, app, "main") {
 
     top_right_cont.add_children(&remaining_image);
     top_right_cont.add_children(&remaining);
+
+    top_right_cont.add_children(&elapsed_image);
+    top_right_cont.add_children(&elapsed);
 
     home.setPressedCallback([this]() { UARTSend(56); });
 
@@ -43,7 +48,11 @@ void Main::update(FT6336U& touch) {
         else
             estimated_finish_time = 0;
 
+        if (state_t == 1)
+            total_elapsed += 3;
+
         remaining.setText(String("ETA: ") + String(format_duration(estimated_finish_time).c_str()));
+        elapsed.setText(String("Elapsed: ") + String(format_duration(total_elapsed).c_str()));
     }
 
     image_cont.update(t);
