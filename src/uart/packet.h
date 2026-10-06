@@ -49,7 +49,11 @@ public:
     /// @brief read f32 from buf
     bool readFloat(float& value);
 
+    /// @brief Reads exact count of bytes
     bool readExact(void* buffer, uint16_t size);
+
+    /// @brief Read to string
+    bool readString(String* str);
 };
 
 extern const uint8_t SYNC_BYTES[];

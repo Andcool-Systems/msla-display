@@ -144,3 +144,23 @@ bool PacketReader::readExact(void* buffer, uint16_t size) {
 
     return true;
 }
+
+bool PacketReader::readString(String* str) {
+    uint16_t len;
+
+    if (!this->readUInt16(len))
+        return false;
+
+    if (!canRead(len))
+        return false;
+
+    str->reserve(len);
+    str->remove(0);
+
+    // We cannot memcpy here, cuz string doesn't have a resize method
+    for (uint16_t i = 0; i < len; i++)
+        *str += (char)data[pos + i];
+
+    pos += len;
+    return true;
+}
