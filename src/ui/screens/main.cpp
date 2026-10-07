@@ -12,6 +12,8 @@ Main::Main(TFT_eSPI& tft, Application& app)
     z_pos_image.loadImage("/bp.rgb565");
     uv_image.loadImage("/uv.rgb565");
 
+    scene.loadImage("/scene.rgb565");
+
     preview.setRequestCallback([](uint16_t h, uint16_t request_bytes, uint16_t offset_bytes) {
         PacketWriter pw;
         pw.write((uint8_t)20);
@@ -29,16 +31,17 @@ Main::Main(TFT_eSPI& tft, Application& app)
 
     top_right_cont.add_children(&printer_status);
     top_right_cont.add_children(&hr1);
-    top_right_cont.add_children(&global_progress);
 
-    top_right_cont.add_children(&stack_image);
-    top_right_cont.add_children(&layers);
+    printing_status_container.add_children(&global_progress);
 
-    top_right_cont.add_children(&remaining_image);
-    top_right_cont.add_children(&remaining);
+    printing_status_container.add_children(&stack_image);
+    printing_status_container.add_children(&layers);
 
-    top_right_cont.add_children(&elapsed_image);
-    top_right_cont.add_children(&elapsed);
+    printing_status_container.add_children(&remaining_image);
+    printing_status_container.add_children(&remaining);
+
+    printing_status_container.add_children(&elapsed_image);
+    printing_status_container.add_children(&elapsed);
 
     home.setPressedCallback([this]() { UARTSend(56); });
 
@@ -51,29 +54,18 @@ Main::Main(TFT_eSPI& tft, Application& app)
     left_bottom_card.add_children(&z_pos);
     left_bottom_card.add_children(&uv_image);
     left_bottom_card.add_children(&uv_state);
+    left_bottom_card.add_children(&core_ver);
 }
 
 void Main::update(TouchPointType& t) {
-    if (global_state_timer.timeout())
+    if (global_state_timer.timeout() || first_draw) {
         UARTSend(10); // STATUS REQUEST
+        if (!machine_info_loaded)
+            UARTSend(14); // MACHINE INFO
+    }
 
-    if (physical_state_timer.timeout()) {
+    if (physical_state_timer.timeout() || first_draw)
         UARTSend(12); // MECHANICAL STATUS REQUEST
-    }
-
-    switch (t.status) {
-        case TouchStatusEnum::release:
-            lbl.setText("release");
-            break;
-
-        case TouchStatusEnum::stream:
-            lbl.setText("stream");
-            break;
-
-        case TouchStatusEnum::touch:
-            lbl.setText("touch");
-            break;
-    }
 
     if (remaining_update_timer.timeout()) {
         if (estimated_finish_time >= ETA_UPDATE_SECONDS)
@@ -93,6 +85,14 @@ void Main::update(TouchPointType& t) {
     bottom_card.update(t);
     buttons_cont.update(t);
     left_bottom_card.update(t);
+
+    if (isPrintState(state_t)) {
+        printing_status_container.update(t);
+    } else {
+        scene.update(t);
+    }
+
+    first_draw = false;
 }
 
 void Main::onUART(PacketReader& pr) {
@@ -111,6 +111,12 @@ void Main::onUART(PacketReader& pr) {
         case 13:
             updateMechanicalState(pr);
             break;
+
+        /// MACHINE INFO
+        case 15: {
+            updateMachineInfo(pr);
+            break;
+        }
 
         /// PRINTING PREVIEW
         case 21:
@@ -187,7 +193,20 @@ void Main::updateState(PacketReader& pr) {
         preview.startLoading();
     }
 
+    if (last_state_t != state_t) {
+        top_right_cont.invalidate();
+    }
+
     last_state_t = state_t;
+}
+
+void Main::updateMachineInfo(PacketReader& pr) {
+    String s;
+    if (pr.readString(&s)) {
+        core_ver.setText("Core ver " + s);
+    }
+
+    machine_info_loaded = true;
 }
 
 void Main::invalidate() {

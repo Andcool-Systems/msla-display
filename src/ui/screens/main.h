@@ -28,9 +28,8 @@ private:
     Timer physical_state_timer;
     Timer remaining_update_timer;
 
-    bool preview_loaded = false;
-    uint8_t preview_loading_lines = 2;
-    uint16_t preview_loading_offset = 0;
+    bool machine_info_loaded = false;
+    bool first_draw = true;
 
     /// STATE
     uint8_t last_state_t = 0;
@@ -60,9 +59,7 @@ private:
 
     Image logo = Image(tft, ((TFT_WIDTH / 2) - 120) / 2, ((TFT_WIDTH / 2) - 120) / 2, 120, 120);
 
-    Container top_right_cont = Container(tft, TFT_WIDTH / 2 + CARD_GAP, CARD_MARGIN,
-                                         TFT_HEIGHT - (TFT_WIDTH / 2 + (CARD_GAP + CARD_MARGIN)),
-                                         TFT_WIDTH / 2, 5, TFT_CARD_COLOR, TFT_BG_COLOR);
+    /// -----------------------------------------
 
     Container left_bottom_card =
         Container(tft, CARD_MARGIN, TFT_WIDTH / 2 + CARD_GAP, TFT_WIDTH / 2 + CARD_PADDING + 5,
@@ -78,6 +75,9 @@ private:
 
     Label uv_state =
         Label(tft, "OFF", CARD_PADDING + 30, CARD_PADDING + 35, TFT_WHITE, TFT_CARD_COLOR, 2);
+
+    Label core_ver = Label(tft, "", CARD_PADDING, left_bottom_card.h - (CARD_PADDING + 7),
+                           TFT_DARKGREY, TFT_CARD_COLOR, 1);
 
     // ------------------------------------------------------------------
 
@@ -107,6 +107,15 @@ private:
     Label lbl = Label(tft, "Label", 5, 5, TFT_WHITE, TFT_CARD_COLOR, 2);
     // Button btn = Button(tft, "Btn", 10, 10, 50, 50, TFT_RED, TFT_WHITE, 2);
 
+    /// --------------------------------------------
+
+    // Special thanks to @I_KODI_I https://t.me/I_KODI_I for this pixel art
+    Image scene = Image(tft, TFT_WIDTH / 2 + CARD_GAP, TFT_WIDTH / 2 - 118, 305, 118);
+
+    Container top_right_cont = Container(tft, TFT_WIDTH / 2 + CARD_GAP, CARD_MARGIN,
+                                         TFT_HEIGHT - (TFT_WIDTH / 2 + (CARD_GAP + CARD_MARGIN)),
+                                         TFT_WIDTH / 2, 5, TFT_CARD_COLOR, TFT_BG_COLOR);
+
     Label printer_status =
         Label(tft, "Loading...", CARD_PADDING, CARD_PADDING, TFT_WHITE, TFT_CARD_COLOR, 2);
 
@@ -114,28 +123,33 @@ private:
                 TFT_HEIGHT - (TFT_WIDTH / 2 + (CARD_GAP + CARD_MARGIN * 3)), 2, TFT_EL_COLOR,
                 TFT_CARD_COLOR);
 
+    Container printing_status_container =
+        Container(tft, TFT_WIDTH / 2 + CARD_GAP, CARD_MARGIN + 32,
+                  TFT_HEIGHT - (TFT_WIDTH / 2 + (CARD_GAP + CARD_MARGIN)), TFT_WIDTH / 2 - 37, 0,
+                  TFT_CARD_COLOR, TFT_CARD_COLOR);
+
     ProgressBar global_progress =
-        ProgressBar(tft, CARD_PADDING + 1, CARD_PADDING + 30,
+        ProgressBar(tft, CARD_PADDING, CARD_PADDING,
                     TFT_HEIGHT - (TFT_WIDTH / 2 + (CARD_GAP + CARD_MARGIN) + CARD_GAP * 2), 15,
                     TFT_WHITE, TFT_ACT_COLOR, TFT_EL_COLOR, TFT_CARD_COLOR, 2);
 
     /// layers
-    Image stack_image = Image(tft, CARD_PADDING, CARD_GAP + 55, 24, 24);
+    Image stack_image = Image(tft, CARD_PADDING - 3, CARD_GAP + 25, 24, 24);
 
     Label layers =
-        Label(tft, "Layer -/-", CARD_PADDING + 30, CARD_GAP + 60, TFT_WHITE, TFT_CARD_COLOR, 2);
+        Label(tft, "Layer -/-", CARD_PADDING + 27, CARD_GAP + 30, TFT_WHITE, TFT_CARD_COLOR, 2);
 
     /// remaining
-    Image remaining_image = Image(tft, CARD_PADDING, CARD_GAP + 85, 24, 24);
+    Image remaining_image = Image(tft, CARD_PADDING - 3, CARD_GAP + 55, 24, 24);
 
     Label remaining =
-        Label(tft, "ETA: 0s", CARD_PADDING + 30, CARD_GAP + 90, TFT_WHITE, TFT_CARD_COLOR, 2);
+        Label(tft, "ETA: 0s", CARD_PADDING + 27, CARD_GAP + 60, TFT_WHITE, TFT_CARD_COLOR, 2);
 
     /// elapsed
-    Image elapsed_image = Image(tft, CARD_PADDING, CARD_GAP + 115, 24, 24);
+    Image elapsed_image = Image(tft, CARD_PADDING - 3, CARD_GAP + 85, 24, 24);
 
     Label elapsed =
-        Label(tft, "Elapsed: 0s", CARD_PADDING + 30, CARD_GAP + 120, TFT_WHITE, TFT_CARD_COLOR, 2);
+        Label(tft, "Elapsed: 0s", CARD_PADDING + 27, CARD_GAP + 90, TFT_WHITE, TFT_CARD_COLOR, 2);
 
 public:
     Main(TFT_eSPI& tft, Application& app);
@@ -149,4 +163,6 @@ public:
     void updateState(PacketReader& pr);
 
     void updateMechanicalState(PacketReader& pr);
+
+    void updateMachineInfo(PacketReader& pr);
 };

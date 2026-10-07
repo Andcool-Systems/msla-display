@@ -37,7 +37,13 @@ public:
         if (str == text)
             return;
 
-        this->dirty_area = DirtyArea(getX(), getY(), tft.textWidth(this->text), tft.fontHeight());
+        uint8_t s = tft.textsize;
+        tft.setTextSize(this->font_size);
+        int text_w = tft.textWidth(text);
+        int font_h = tft.fontHeight();
+        tft.setTextSize(s);
+
+        this->dirty_area = DirtyArea(getX(), getY(), text_w, font_h);
 
         this->text = str;
         this->invalidate();
