@@ -8,4 +8,4 @@
 
 ---
 
-### ESP32 Code for display controller code
+### ESP32 Code for display controller module
