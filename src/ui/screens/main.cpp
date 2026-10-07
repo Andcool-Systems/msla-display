@@ -195,6 +195,7 @@ void Main::updateState(PacketReader& pr) {
 
     if (last_state_t != state_t) {
         top_right_cont.invalidate();
+        scene.invalidate();
     }
 
     last_state_t = state_t;
